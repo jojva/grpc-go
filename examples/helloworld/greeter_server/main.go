@@ -25,6 +25,7 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"time"
 
 	"google.golang.org/grpc"
 	pb "google.golang.org/grpc/examples/helloworld/helloworld"
@@ -42,6 +43,7 @@ type server struct {
 // SayHello implements helloworld.GreeterServer
 func (s *server) SayHello(ctx context.Context, in *pb.HelloRequest) (*pb.HelloReply, error) {
 	log.Printf("Received: %v", in.GetName())
+	time.Sleep(1 * time.Second)
 	return &pb.HelloReply{Message: "Hello " + in.GetName()}, nil
 }
 
@@ -51,7 +53,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
 	}
-	s := grpc.NewServer()
+	s := grpc.NewServer(grpc.MaxConcurrentStreams(100))
 	pb.RegisterGreeterServer(s, &server{})
 	log.Printf("server listening at %v", lis.Addr())
 	if err := s.Serve(lis); err != nil {

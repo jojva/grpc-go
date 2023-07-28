@@ -39,6 +39,18 @@ var (
 	name = flag.String("name", defaultName, "Name to greet")
 )
 
+func greet(c pb.GreeterClient, i int) {
+	// Contact the server and print out its response.
+	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
+	defer cancel()
+	log.Printf("Sending greet %d", i)
+	r, err := c.SayHello(ctx, &pb.HelloRequest{Name: *name})
+	if err != nil {
+		log.Fatalf("could not greet: %v", err)
+	}
+	log.Printf("Greeting %d: %s", i, r.GetMessage())
+}
+
 func main() {
 	flag.Parse()
 	// Set up a connection to the server.
@@ -49,12 +61,8 @@ func main() {
 	defer conn.Close()
 	c := pb.NewGreeterClient(conn)
 
-	// Contact the server and print out its response.
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
-	defer cancel()
-	r, err := c.SayHello(ctx, &pb.HelloRequest{Name: *name})
-	if err != nil {
-		log.Fatalf("could not greet: %v", err)
+	for i := 0; i < 1000; i++ {
+		go greet(c, i)
 	}
-	log.Printf("Greeting: %s", r.GetMessage())
+	time.Sleep(100 * time.Second)
 }
